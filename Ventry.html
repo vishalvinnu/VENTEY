@@ -1,0 +1,345 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Ventry</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Figtree:wght@400;500;600&display=swap">
+<style>
+/* Layout: sticky top bar, one centered column, tabs switch Browse / Dashboard / My profile. Demo role switch flips who "I" am. */
+:root {
+  --bg: #f5f6f9;
+  --surface: #ffffff;
+  --fg: #151a26;
+  --muted: #5d667a;
+  --line: #e1e4ec;
+  --accent: #2563eb;
+  --accent-fg: #ffffff;
+  --tint: #e8effd;
+  --good: #14794a;
+  --good-bg: #e2f4ea;
+  --warn: #8a5a00;
+  --warn-bg: #fdf1d6;
+  --bad: #a3322b;
+  --bad-bg: #fbe5e3;
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1119; --surface: #171b27; --fg: #e8ebf3; --muted: #9aa3b8; --line: #2a3043;
+    --accent: #6f9bff; --accent-fg: #0e1119; --tint: #1f2a47;
+    --good: #5fd49a; --good-bg: #153326; --warn: #f0c366; --warn-bg: #382b0f; --bad: #f19088; --bad-bg: #3b1d1b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1119; --surface: #171b27; --fg: #e8ebf3; --muted: #9aa3b8; --line: #2a3043;
+  --accent: #6f9bff; --accent-fg: #0e1119; --tint: #1f2a47;
+  --good: #5fd49a; --good-bg: #153326; --warn: #f0c366; --warn-bg: #382b0f; --bad: #f19088; --bad-bg: #3b1d1b;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+h1, h2, h3 { font-family: var(--font-display); margin: 0; text-wrap: balance; letter-spacing: -0.01em; }
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 960px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+header { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--surface); border-bottom: 1px solid var(--line); }
+.bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; padding-block: 12px; }
+.logo { font-family: var(--font-display); font-weight: 700; font-size: 22px; display: flex; align-items: center; gap: 8px; }
+.logo i { width: 22px; height: 22px; border-radius: 6px; background: var(--accent); display: inline-block; position: relative; }
+.logo i::after { content: ""; position: absolute; inset: 6px; border: 2px solid var(--accent-fg); border-left-color: transparent; border-bottom-color: transparent; transform: rotate(45deg) translate(-1px, 1px); }
+.switch { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { border: 0; background: transparent; padding: 6px 12px; cursor: pointer; color: var(--muted); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); font-weight: 600; }
+nav { display: flex; gap: 4px; overflow-x: auto; }
+nav button { border: 0; background: transparent; padding: 10px 14px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; font-weight: 500; white-space: nowrap; }
+nav button[aria-current="page"] { color: var(--fg); border-bottom-color: var(--accent); }
+.badge { background: var(--accent); color: var(--accent-fg); border-radius: 99px; font-size: 11px; font-weight: 600; padding: 1px 7px; margin-left: 6px; }
+
+main { padding-block: 24px 56px; display: flex; flex-direction: column; gap: 20px; }
+.note { font-size: 13px; color: var(--muted); }
+.lead { display: flex; flex-direction: column; gap: 6px; }
+.lead h1 { font-size: clamp(24px, 5vw, 32px); }
+.lead p { margin: 0; color: var(--muted); max-width: 60ch; }
+
+.search { display: flex; gap: 10px; flex-wrap: wrap; }
+.search input { flex: 1 1 220px; min-width: 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip { border: 1px solid var(--line); background: var(--surface); border-radius: 99px; padding: 3px 11px; font-size: 13px; color: var(--muted); cursor: pointer; }
+.chip:hover { border-color: var(--accent); color: var(--accent); }
+.tag { background: var(--tint); color: var(--accent); border-radius: 6px; padding: 2px 8px; font-size: 12.5px; font-weight: 500; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.person { display: flex; gap: 12px; align-items: center; min-width: 0; }
+.avatar { flex: none; width: 42px; height: 42px; border-radius: 50%; background: var(--tint); color: var(--accent); display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; }
+.person h3 { font-size: 17px; }
+.person div { min-width: 0; }
+.meta { font-size: 13px; color: var(--muted); }
+.headline { margin: 0; font-weight: 500; }
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: auto; }
+
+.btn { border: 1px solid var(--line); background: var(--surface); border-radius: 8px; padding: 8px 14px; cursor: pointer; font-weight: 500; }
+.btn:hover { border-color: var(--accent); }
+.btn.primary { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); font-weight: 600; }
+.btn.primary:hover { filter: brightness(1.08); }
+.btn.danger { color: var(--bad); }
+.btn:disabled { opacity: 0.55; cursor: default; }
+.status { font-size: 12.5px; font-weight: 600; border-radius: 6px; padding: 3px 9px; }
+.status.pending { background: var(--warn-bg); color: var(--warn); }
+.status.accepted { background: var(--good-bg); color: var(--good); }
+.status.declined { background: var(--bad-bg); color: var(--bad); }
+
+.detail { display: flex; flex-direction: column; gap: 14px; }
+.back { align-self: flex-start; border: 0; background: none; color: var(--accent); cursor: pointer; padding: 0; font-weight: 500; }
+.compose { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--line); padding-top: 14px; }
+label { font-size: 13px; font-weight: 600; display: flex; flex-direction: column; gap: 5px; }
+.field { padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); width: 100%; font-weight: 400; }
+textarea.field { min-height: 96px; resize: vertical; }
+
+.section { display: flex; flex-direction: column; gap: 10px; }
+.section h2 { font-size: 18px; display: flex; align-items: center; gap: 8px; }
+.list { display: flex; flex-direction: column; gap: 10px; }
+.req { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; align-items: flex-start; }
+.req .body { flex: 1 1 260px; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.quote { margin: 0; color: var(--muted); font-size: 14px; overflow-wrap: anywhere; }
+.empty { color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; padding: 18px; text-align: center; }
+.form { max-width: 560px; display: flex; flex-direction: column; gap: 14px; }
+
+.toast { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(20px + env(safe-area-inset-bottom, 0px)); background: var(--fg); color: var(--bg); padding: 10px 16px; border-radius: 8px; font-weight: 500; font-size: 14px; max-width: calc(100% - 32px); }
+@media (prefers-reduced-motion: no-preference) { .card { transition: border-color 0.15s; } .card:hover { border-color: var(--accent); } }
+</style>
+
+<header>
+  <div class="wrap">
+    <div class="bar">
+      <div class="logo"><i></i>Ventry</div>
+      <div class="switch">
+        <span>Demo as</span>
+        <div class="seg" role="group" aria-label="Demo as">
+          <button type="button" id="roleBusiness" data-action="role" data-role="business" aria-pressed="true">Business</button>
+          <button type="button" id="roleExpert" data-action="role" data-role="expert" aria-pressed="false">Expert</button>
+        </div>
+      </div>
+    </div>
+    <nav aria-label="Sections" id="nav"></nav>
+  </div>
+</header>
+
+<main class="wrap" id="app"></main>
+<div class="toast" id="toast" hidden role="status"></div>
+
+<script>
+(function () {
+  var people = {
+    e1: { id: 'e1', role: 'expert', name: 'Ananya Rao', headline: 'Retail operations turnaround, one shelf at a time', bio: 'I spent 11 years running store networks before advising owners directly. My approach: fix the weakest link in the chain first, measure weekly, and never add a process the team cannot explain in one sentence.', skills: ['Lean operations', 'Supply chain', 'Cost discipline'], industry: 'Retail', location: 'Bengaluru' },
+    e2: { id: 'e2', role: 'expert', name: 'Rohit Menon', headline: 'Founder-led sales without the pressure', bio: 'Former enterprise seller turned advisor. I teach founders to sell by asking better questions, pricing on value, and walking away from the wrong customers early.', skills: ['Consultative selling', 'Pricing', 'B2B SaaS'], industry: 'Software', location: 'Hyderabad' },
+    e3: { id: 'e3', role: 'expert', name: 'Farah Sheikh', headline: 'Brand building from first principles', bio: 'I help consumer brands decide what they stand for before they spend on ads. Every engagement starts with a one-page belief statement the whole team signs.', skills: ['Brand strategy', 'Storytelling', 'D2C'], industry: 'Consumer goods', location: 'Mumbai' },
+    e4: { id: 'e4', role: 'expert', name: 'Karthik Iyer', headline: 'Slow growth, durable margins', bio: 'I believe most businesses grow too fast for their own cash. I work with owners on unit economics, careful hiring and reinvesting from profit instead of fundraising.', skills: ['Unit economics', 'Bootstrapping', 'Hiring'], industry: 'Services', location: 'Chennai' },
+    e5: { id: 'e5', role: 'expert', name: 'Meera Joshi', headline: 'Clinics that run on time', bio: 'Hospital administrator for 9 years. I redesign patient flow, scheduling and handover so clinicians spend time on care, not corridors.', skills: ['Healthcare operations', 'Patient experience', 'Process design'], industry: 'Healthcare', location: 'Pune' },
+    e6: { id: 'e6', role: 'expert', name: 'Dev Malhotra', headline: 'Taking local manufacturers abroad', bio: 'Twenty years in export trade. I guide first-time exporters through compliance, buyer audits and negotiating payment terms that protect cash flow.', skills: ['Export compliance', 'Quality systems', 'Negotiation'], industry: 'Manufacturing', location: 'Delhi' },
+    b1: { id: 'b1', role: 'business', name: 'Meridian Foods', headline: 'Packaged snacks, 140 employees, looking to cut waste', bio: 'Regional snack maker supplying 3,000 retail outlets. Our cold chain and distributor ordering are costing us margin, and we want a practical operator to help.', skills: ['Supply chain', 'Cost discipline', 'Distribution'], industry: 'Food processing', location: 'Hyderabad' },
+    b2: { id: 'b2', role: 'business', name: 'Lotus Dental Group', headline: 'Five dental clinics, long patient waits', bio: 'Growing from two to five clinics in two years. Scheduling and front desk handover have not kept up, and patient reviews show it.', skills: ['Healthcare operations', 'Patient experience'], industry: 'Healthcare', location: 'Pune' },
+    b3: { id: 'b3', role: 'business', name: 'Kaveri Textiles', headline: 'Family weaving unit ready to export', bio: 'Third-generation handloom and powerloom producer. We have a first buyer enquiry from Europe and need to understand compliance and audits.', skills: ['Export compliance', 'Quality systems'], industry: 'Textiles', location: 'Coimbatore' },
+    b4: { id: 'b4', role: 'business', name: 'Northwind Logistics', headline: 'Regional trucking with thin margins', bio: 'Forty-truck fleet in North India. Fuel and idle time eat our profit. Looking for someone to rethink routing and driver scheduling.', skills: ['Lean operations', 'Unit economics'], industry: 'Logistics', location: 'Delhi' },
+    b5: { id: 'b5', role: 'business', name: 'Bloom & Basil', headline: 'Plant-based skincare, great product, fuzzy story', bio: 'Our repeat rate is strong but new customers do not understand what makes us different. We want a clear brand position before our next campaign.', skills: ['Brand strategy', 'Storytelling', 'D2C'], industry: 'Consumer goods', location: 'Bengaluru' },
+    b6: { id: 'b6', role: 'business', name: 'Tanvi Labs', headline: 'Early-stage SaaS finding its first 50 customers', bio: 'Six-person team with a working product and eight paying customers. Sales so far has been founder hustle and we need a repeatable approach.', skills: ['Consultative selling', 'Pricing', 'B2B SaaS'], industry: 'Software', location: 'Hyderabad' }
+  };
+  var requests = [
+    { id: 1, from: 'e2', to: 'b1', msg: 'Your distributor network looks like a pricing problem as much as a logistics one. Happy to share what worked for a similar firm.', status: 'pending' },
+    { id: 2, from: 'e5', to: 'b1', msg: 'I noticed your depots handle returns manually. I have a handover checklist that cut errors by half in a hospital pharmacy.', status: 'pending' },
+    { id: 3, from: 'b1', to: 'e3', msg: 'We would love your view on how to position a regional snack brand nationally.', status: 'accepted' },
+    { id: 4, from: 'b2', to: 'e1', msg: 'Our front desk queues are our biggest complaint. Could we talk about a weekly measurement approach?', status: 'pending' },
+    { id: 5, from: 'b5', to: 'e1', msg: 'We ship from a small warehouse and returns are piling up. Do you advise on D2C fulfilment?', status: 'pending' },
+    { id: 6, from: 'e1', to: 'b4', msg: 'Idle time per truck is usually the fastest win. I can walk through how I measure it.', status: 'accepted' }
+  ];
+  var nextId = 7;
+  var state = { role: 'business', tab: 'browse', q: '', viewId: null, composing: false, toastTimer: null };
+
+  var app = document.getElementById('app');
+  var nav = document.getElementById('nav');
+  var toastEl = document.getElementById('toast');
+
+  function meId() { return state.role === 'business' ? 'b1' : 'e1'; }
+  function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+  function initials(name) { return name.split(/\s+/).slice(0, 2).map(function (w) { return w.charAt(0); }).join('').toUpperCase(); }
+  function toast(msg) {
+    toastEl.textContent = msg; toastEl.hidden = false;
+    clearTimeout(state.toastTimer);
+    state.toastTimer = setTimeout(function () { toastEl.hidden = true; }, 2400);
+  }
+  function between(a, b) {
+    for (var i = 0; i < requests.length; i++) {
+      var r = requests[i];
+      if ((r.from === a && r.to === b) || (r.from === b && r.to === a)) return r;
+    }
+    return null;
+  }
+  function pendingForMe() { return requests.filter(function (r) { return r.to === meId() && r.status === 'pending'; }).length; }
+
+  function statusFor(otherId) {
+    var r = between(meId(), otherId);
+    if (!r) return { label: '', kind: '' };
+    if (r.status === 'accepted') return { label: 'Connected', kind: 'accepted' };
+    if (r.status === 'declined') return { label: 'Declined', kind: 'declined' };
+    return r.from === meId() ? { label: 'Request sent', kind: 'pending' } : { label: 'Wants to connect', kind: 'pending' };
+  }
+
+  function tagsHtml(list) { return '<div class="tags">' + list.map(function (s) { return '<span class="tag">' + esc(s) + '</span>'; }).join('') + '</div>'; }
+  function personHead(p) {
+    return '<div class="person"><div class="avatar" aria-hidden="true">' + esc(initials(p.name)) + '</div><div><h3>' + esc(p.name) + '</h3><div class="meta">' + esc(p.industry) + ' · ' + esc(p.location) + '</div></div></div>';
+  }
+
+  function renderNav() {
+    var n = pendingForMe();
+    var tabs = [['browse', state.role === 'business' ? 'Find experts' : 'Find businesses'], ['dashboard', 'Dashboard'], ['profile', 'My profile']];
+    nav.innerHTML = tabs.map(function (t) {
+      var extra = t[0] === 'dashboard' && n ? '<span class="badge">' + n + '</span>' : '';
+      return '<button type="button" data-action="tab" data-tab="' + t[0] + '"' + (state.tab === t[0] ? ' aria-current="page"' : '') + '>' + t[1] + extra + '</button>';
+    }).join('');
+    document.getElementById('roleBusiness').setAttribute('aria-pressed', String(state.role === 'business'));
+    document.getElementById('roleExpert').setAttribute('aria-pressed', String(state.role === 'expert'));
+  }
+
+  function renderBrowse() {
+    var target = state.role === 'business' ? 'expert' : 'business';
+    var q = state.q.trim().toLowerCase();
+    var list = Object.keys(people).map(function (k) { return people[k]; }).filter(function (p) {
+      if (p.role !== target) return false;
+      if (!q) return true;
+      return (p.skills.join(' ') + ' ' + p.industry + ' ' + p.headline + ' ' + p.name).toLowerCase().indexOf(q) !== -1;
+    });
+    var all = {};
+    Object.keys(people).forEach(function (k) { if (people[k].role === target) people[k].skills.forEach(function (s) { all[s] = true; }); });
+    var chips = Object.keys(all).slice(0, 8).map(function (s) { return '<button type="button" class="chip" data-action="chip" data-skill="' + esc(s) + '">' + esc(s) + '</button>'; }).join('');
+    var heading = state.role === 'business' ? 'Find an expert who thinks like you do' : 'Find a business you can help grow';
+    var sub = state.role === 'business' ? 'Every expert lists the ideas and methods they work by. Search by skill or approach, then send a request.' : 'Businesses describe what they are stuck on. Search by skill to find the ones that match how you work.';
+    var cards = list.map(function (p) {
+      var st = statusFor(p.id);
+      return '<article class="card">' + personHead(p) + '<p class="headline">' + esc(p.headline) + '</p>' + tagsHtml(p.skills) +
+        '<div class="row"><button type="button" class="btn" data-action="view" data-id="' + p.id + '">View profile</button>' +
+        (st.label ? '<span class="status ' + st.kind + '">' + st.label + '</span>' : '') + '</div></article>';
+    }).join('');
+    app.innerHTML = '<div class="lead"><h1>' + heading + '</h1><p>' + sub + '</p></div>' +
+      '<div class="search"><input class="field" id="q" type="search" placeholder="Search skills, e.g. supply chain" value="' + esc(state.q) + '" aria-label="Search by skill"></div>' +
+      '<div class="chips">' + chips + '</div>' +
+      (list.length ? '<div class="grid">' + cards + '</div>' : '<div class="empty">No profiles match that search. Try a different skill.</div>') +
+      '<p class="note">Sample profiles for demonstration. In the live product these are real people who registered.</p>';
+    var input = document.getElementById('q');
+    input.addEventListener('input', function () {
+      state.q = input.value;
+      var pos = input.selectionStart;
+      renderBrowse();
+      var again = document.getElementById('q'); again.focus(); again.setSelectionRange(pos, pos);
+    });
+  }
+
+  function renderDetail() {
+    var p = people[state.viewId];
+    var st = statusFor(p.id);
+    var action;
+    if (st.label === 'Connected') action = '<span class="status accepted">Connected</span>';
+    else if (st.label === 'Request sent') action = '<span class="status pending">Request sent</span>';
+    else if (st.label === 'Wants to connect') action = '<span class="status pending">Wants to connect</span><button type="button" class="btn primary" data-action="tab" data-tab="dashboard">Respond in dashboard</button>';
+    else if (st.label === 'Declined') action = '<span class="status declined">Declined</span>';
+    else action = '<button type="button" class="btn primary" data-action="compose">Send connection request</button>';
+    var compose = state.composing && !st.label ?
+      '<form class="compose" id="sendForm"><label for="msg">Message to ' + esc(p.name) + '<textarea class="field" id="msg" maxlength="500" placeholder="Say what you would like to work on together.">Hi ' + esc(p.name.split(' ')[0]) + ', I think your approach fits what we are working on. Could we talk?</textarea></label><div class="row"><button type="submit" class="btn primary">Send request</button><button type="button" class="btn" data-action="cancel">Cancel</button></div></form>' : '';
+    app.innerHTML = '<div class="detail"><button type="button" class="back" data-action="back">Back to results</button>' +
+      '<article class="card">' + personHead(p) + '<h2>' + esc(p.headline) + '</h2><p style="margin:0">' + esc(p.bio) + '</p>' +
+      '<div><div class="meta" style="margin-bottom:6px">' + (p.role === 'expert' ? 'Skills and ideology' : 'Looking for help with') + '</div>' + tagsHtml(p.skills) + '</div>' +
+      '<div class="row">' + action + '</div>' + compose + '</article></div>';
+    var form = document.getElementById('sendForm');
+    if (form) form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var text = document.getElementById('msg').value.trim();
+      if (!text) { toast('Write a short message first'); return; }
+      requests.push({ id: nextId++, from: meId(), to: p.id, msg: text, status: 'pending' });
+      state.composing = false;
+      toast('Request sent to ' + p.name);
+      render();
+    });
+  }
+
+  function reqCard(r, incoming) {
+    var other = people[incoming ? r.from : r.to];
+    var actions = '';
+    if (incoming && r.status === 'pending') actions = '<div class="row" style="margin-top:0"><button type="button" class="btn primary" data-action="accept" data-id="' + r.id + '">Accept</button><button type="button" class="btn danger" data-action="decline" data-id="' + r.id + '">Decline</button></div>';
+    else actions = '<span class="status ' + r.status + '">' + r.status.charAt(0).toUpperCase() + r.status.slice(1) + '</span>';
+    return '<article class="card req"><div class="body"><div class="person"><div class="avatar" aria-hidden="true">' + esc(initials(other.name)) + '</div><div><h3>' + esc(other.name) + '</h3><div class="meta">' + esc(other.headline) + '</div></div></div><p class="quote">' + esc(r.msg) + '</p></div>' + actions + '</article>';
+  }
+
+  function renderDashboard() {
+    var me = meId();
+    var inbox = requests.filter(function (r) { return r.to === me; });
+    var sent = requests.filter(function (r) { return r.from === me; });
+    var connected = requests.filter(function (r) { return r.status === 'accepted' && (r.to === me || r.from === me); });
+    function sec(title, items, incoming, emptyText) {
+      return '<section class="section"><h2>' + title + '</h2><div class="list">' + (items.length ? items.map(function (r) { return reqCard(r, incoming); }).join('') : '<div class="empty">' + emptyText + '</div>') + '</div></section>';
+    }
+    var conn = connected.map(function (r) {
+      var o = people[r.from === me ? r.to : r.from];
+      return '<article class="card">' + personHead(o) + '<div class="row"><button type="button" class="btn" data-action="view" data-id="' + o.id + '">View profile</button></div></article>';
+    }).join('');
+    app.innerHTML = '<div class="lead"><h1>Your dashboard</h1><p>Signed in as ' + esc(people[me].name) + '. Requests you receive wait here until you accept or decline.</p></div>' +
+      sec('Requests received', inbox, true, 'Nothing yet. Complete your profile so people can find you.') +
+      sec('Requests sent', sent, false, 'You have not sent any requests. Browse profiles to start.') +
+      '<section class="section"><h2>Connections</h2>' + (conn ? '<div class="grid">' + conn + '</div>' : '<div class="empty">Accepted requests appear here as connections.</div>') + '</section>';
+  }
+
+  function renderProfile() {
+    var p = people[meId()];
+    var skillLabel = state.role === 'expert' ? 'Skills and ideology (comma separated)' : 'What you need help with (comma separated)';
+    app.innerHTML = '<div class="lead"><h1>My profile</h1><p>This is what ' + (state.role === 'expert' ? 'businesses' : 'experts') + ' see when they find you.</p></div>' +
+      '<form class="form" id="profileForm"><label for="f-headline">Headline<input class="field" id="f-headline" maxlength="150" value="' + esc(p.headline) + '"></label>' +
+      '<label for="f-bio">About<textarea class="field" id="f-bio" maxlength="2000">' + esc(p.bio) + '</textarea></label>' +
+      '<label for="f-skills">' + skillLabel + '<input class="field" id="f-skills" value="' + esc(p.skills.join(', ')) + '"></label>' +
+      '<label for="f-industry">Industry<input class="field" id="f-industry" maxlength="100" value="' + esc(p.industry) + '"></label>' +
+      '<label for="f-location">Location<input class="field" id="f-location" maxlength="100" value="' + esc(p.location) + '"></label>' +
+      '<div class="row"><button type="submit" class="btn primary">Save profile</button></div></form>';
+    document.getElementById('profileForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      p.headline = document.getElementById('f-headline').value.trim();
+      p.bio = document.getElementById('f-bio').value.trim();
+      p.skills = document.getElementById('f-skills').value.split(',').map(function (s) { return s.trim(); }).filter(Boolean).slice(0, 20);
+      p.industry = document.getElementById('f-industry').value.trim();
+      p.location = document.getElementById('f-location').value.trim();
+      toast('Profile saved');
+    });
+  }
+
+  function render() {
+    renderNav();
+    if (state.viewId) return renderDetail();
+    if (state.tab === 'dashboard') return renderDashboard();
+    if (state.tab === 'profile') return renderProfile();
+    renderBrowse();
+  }
+
+  document.addEventListener('click', function (e) {
+    var el = e.target.closest('[data-action]');
+    if (!el) return;
+    var a = el.getAttribute('data-action');
+    if (a === 'role') { state.role = el.getAttribute('data-role'); state.tab = 'browse'; state.viewId = null; state.composing = false; state.q = ''; }
+    else if (a === 'tab') { state.tab = el.getAttribute('data-tab'); state.viewId = null; state.composing = false; }
+    else if (a === 'view') { state.viewId = el.getAttribute('data-id'); state.composing = false; }
+    else if (a === 'back') { state.viewId = null; state.composing = false; }
+    else if (a === 'compose') { state.composing = true; }
+    else if (a === 'cancel') { state.composing = false; }
+    else if (a === 'chip') { state.q = el.getAttribute('data-skill'); }
+    else if (a === 'accept' || a === 'decline') {
+      var id = Number(el.getAttribute('data-id'));
+      requests.forEach(function (r) { if (r.id === id) r.status = a === 'accept' ? 'accepted' : 'declined'; });
+      toast(a === 'accept' ? 'Request accepted. You are now connected.' : 'Request declined');
+    }
+    render();
+    if (a === 'role' || a === 'tab' || a === 'view' || a === 'back') window.scrollTo(0, 0);
+  });
+
+  render();
+})();
+</script>
+
+</body></html>
